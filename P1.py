@@ -4,64 +4,47 @@ from sklearn.neighbors import NearestNeighbors
 import re
 
 
-def extract_text_from_pdf(pdf_path):
-    doc = fitz.open(pdf_path)
-    text = ""
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        text += page.get_text("text")  
-    return text
+pdf_path = "ASE.pdf"
 
-#Segment 
-def segment_text(text):
-    sections = re.split(r'\n{2,}', text)
-    return sections
+#text from the PDF
+doc = fitz.open(pdf_path)
+text = ""
+for page_num in range(len(doc)):
+    page = doc.load_page(page_num)
+    text += page.get_text("text")
 
-#Convert text to vectors
-def convert_text_to_vectors(sections):
-    vectorizer = TfidfVectorizer()
-    section_vectors = vectorizer.fit_transform(sections)
-    return vectorizer, section_vectors
-
-#Train the k-NN model
-def train_knn_model(section_vectors):
-    knn = NearestNeighbors(n_neighbors=1, metric='cosine')
-    knn.fit(section_vectors)
-    return knn
-
-#questions 
-def find_relevant_section(question, vectorizer, knn):
-    question_vector = vectorizer.transform([question])
-    distances, indices = knn.kneighbors(question_vector)
-    relevant_section_index = indices[0][0]
-    return relevant_section_index
-
-#display
-def extract_answer(relevant_section_index, sections):
-    answer = sections[relevant_section_index]
-    return answer
+# sections
+sections = re.split(r'\n{2,}', text)
+print(f"Number of sections: {len(sections)}")
 
 
+for i, section in enumerate(sections[:5]):
+    print(f"Section {i} preview:")
+    print(section[:200])  #  first 200 characters 
+    print("=" * 40)
 
-pdf_path = "Temp2.pdf"  
-pdf_text = extract_text_from_pdf(pdf_path)
+# S TF-IDF vectors
+vectorizer = TfidfVectorizer()
+section_vectors = vectorizer.fit_transform(sections)
+print(f"Shape of section vectors matrix: {section_vectors.shape}")
 
-#Segment the text
-sections = segment_text(pdf_text)
-
-# Convert text to vectors
-vectorizer, section_vectors = convert_text_to_vectors(sections)
-
-
-knn = train_knn_model(section_vectors)
+# Train the k-NN model
+knn = NearestNeighbors(n_neighbors=1, metric='cosine')
+knn.fit(section_vectors)
 
 
 question = input("Please enter your question: ")
+question_vector = vectorizer.transform([question])
+print("Question vector shape:", question_vector.shape)
+
+distances, indices = knn.kneighbors(question_vector)
+print(f"Distances: {distances}")
+print(f"Indices: {indices}")
+
+relevant_section_index = indices[0][0]
+print(f"Relevant Section Index: {relevant_section_index}")
 
 
-relevant_section_index = find_relevant_section(question, vectorizer, knn)
-answer = extract_answer(relevant_section_index, sections)
-
-
+answer = sections[relevant_section_index]
 print("Answer:")
 print(answer)
