@@ -4,7 +4,7 @@ from sklearn.neighbors import NearestNeighbors
 import re
 
 
-pdf_path = "ASE.pdf"
+pdf_path = "ASE.pdf"#Your PDF Path
 
 #text from the PDF
 doc = fitz.open(pdf_path)
